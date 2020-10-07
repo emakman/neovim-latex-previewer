@@ -1,0 +1,163 @@
+*neovim-latex-previewer.txt*      Live previewing of latex projects.
+
+This plugin is designed to do live pdf updates of latex projects for preview.
+
+                                        *nvim-latex-previewer-dependencies*
+Dependencies~
+nvim-latex-previewer uses latexmk to typeset documents and does a unionmount
+with fuse to superimpose the edited versions of files over the current saved
+versions. It therefore depends on: >
+    mupdf (currently the only fully supported previewer)
+    unionmount-fuse
+    latexmk (currently the only supported compiler)
+    xdotool (for sync)
+<
+                                            *nvim-latex-previewer-features*
+Features~
+The main idea of this plugin was to help me typeset my thesis. Several latex
+previewers for vim exist, but this one has two different diff modes, which work
+on projects with multiple files.
+
+By setting the mode to diff, you see the differences between the version of the
+file that you are currently typing and the version which is saved to disk.
+
+By setting the mode to git, you see the differences between the version of the
+file that you are currently typing and the latest commit.
+
+
+                                             *nvim-latex-previewer-cleanup*
+Cleanup~
+From time to time, if nvim-latex-previewer fails to compile correctly it may
+leave a unionmount in place. The mountpoint should have the form: >
+
+    /tmp/nvim*/#/#/mount
+<
+(where * is a sequence of letters and each # is a number).
+
+These mounts can be cleaned manually if necessary by executing: >
+    fusermount -u /path/to/mount
+<
+
+                                      *nvim-latex-previewer-magic-comments*
+TeX Magic Comments~
+The previewer behavior can be modified by beginning your document with a "magic
+comment".
+                                                *nvim-latex-previewer-root*
+The most important is the TeX root directive: >
+
+    % !TeX root = main.tex
+
+<
+Which tells the previewer which file to feed to tex. The previewer expects all
+files referenced by the root directory to be in some subdirectory of the
+directory that contains it.
+
+                                             *nvim-latex-previewer-program*
+The next directive is the TeX program directive: >
+
+    % !TeX program = latex
+
+<
+you can use this to set the program to tex (plain tex), latex, xetex, or luatex.
+If you set it to anything else, it will run latex, but change the -progname.
+This may change the format files that are used.
+
+                                             *nvim-latex-previewer-options*
+Finally, we have the TeX options directive: >
+
+    % !TeX options = nonstop, synctex
+
+<
+You can use this to set a list of command-line options for latex:
+
+Setting         command-line options~
+enc             -enc -ini                 
+flerror         -file-line-error          
+!flerror        -no-file-line-error       
+ini             -ini                      
+batch           -interaction=batchmode    
+nonstop         -interaction=nonstopemode 
+scroll          -interaction=scrollmode   
+errorstop       -interaction=errorstopmode
+shellescape     -shell-escape             
+!shellescape    -no-shell-escape          
+srcspecials     -src-specials             
+!srcspecials    -no-src-specials          
+synctex         -synctex=1                
+!synctex        -synctex=0                
+
+                                            *nvim-latex-previewer-commands*
+nvim-latex-previewer commands~
+nvim-latex-previewer defines the following commands: 
+>
+    :LatexPreview
+<
+Immediately compiles the document and opens the preview.
+>
+    :LatexPreviewOn
+    :LatexPreviewOff
+    :LatexPreviewToggle
+<
+Enable or disable live preview. When previewing is first enabled, the document
+will be typeset and (if successful) will open in the selected viewer (for now,
+that means MuPDF).
+>
+    :LatexPreviewMode <mode>
+    :NextLatexPreviewMode
+    :PrevLatexPreviewMode
+<
+This sets the preview mode. Choices are:
+Setting Behavior~
+plain   Typeset the current version of the document in the buffer. (default)
+diff    Typeset the diff of the current version against the saved version.
+git     Typeset the current version of the document against the git master.
+
+>
+    :LatexPreviewTimer <n>
+<
+Set a timer for compilation. When enabled, the document will update every <n>
+seconds. To disable this feature, set the timer interval to -1.
+>
+    :LatexPreviewSyncOn
+    :LatexPreviewSyncOff
+    :LatexPreviewSyncToggle
+<
+Enable or disable sync mode (enabled by default). When sync mode is enabled,
+the preview will fast-forward to the page containing the text being edited
+each time it updates.
+>
+    :LatexPreviewCacheOn
+    :LatexPreviewCacheOff
+    :LatexPreviewCacheToggle
+>
+Enable or disable the preview cache. When this is enabled, a folder named .nlp
+will be created in the directory containing the project root, in which all
+files created during compilation will be stored. This can help improve
+initial compile speed when reopening the document but has no other benefits.
+>
+    :LatexPreviewWriteMode <mode>
+<
+This setting determines which files are saved to the project's root directory. 
+It can be any of the following:
+
+Setting                 Behavior ~
+0                       No files are saved.
+!tex                    Saves all files with extensions other than tex.
+<ext1>|<ext2>           Saves all files with extension ext1 or ext2. This list
+                        can contain any number of extensions separated by |
+
+The default setting is 'pdf'.
+>
+    :LatexViewer <viewer>
+<
+The executable used for viewing the document. Only mupdf will sync, but other
+viewers will likely open correctly at least.
+
+>
+    :LatexPreviewLog
+<
+Shows a log of the last compile. This will generate errors if the document has
+not been compiled yet, and will update when the document is recompiled
+(specifically to avoid problems with timed compilation).
+
+ vim:tw=78:ts=8:ft=help:norl:
